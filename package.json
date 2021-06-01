@@ -21,7 +21,7 @@
     "color-convert": "^2.0.1",
     "node-lox-ws-api": "^0.4.5",
     "sprintf-js": "^1.1.2",
-    "@iobroker/adapter-core": "^2.4.0",
+    "@iobroker/adapter-core": "^2.5.0",
     "queue-fifo": "*"
   },
   "devDependencies": {
