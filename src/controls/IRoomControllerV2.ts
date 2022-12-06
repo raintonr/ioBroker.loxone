@@ -13,7 +13,7 @@ export class IRoomControllerV2 extends ControlBase {
                 name: control.name,
                 role: 'thermo',
             },
-            native: { control: control as any },
+            native: { control },
         });
 
         // TODO: other details not implemented - needed to get temperature unit for example (C/F).
@@ -126,12 +126,14 @@ export class IRoomControllerV2 extends ControlBase {
                 await this.setStateAck(name, value);
             },
         );
-        this.addStateChangeListener(
-            uuid + '.comfortTemperature',
-            (oldValue: OldStateValue, newValue: CurrentStateValue) => {
-                this.sendCommand(control.uuidAction, 'setComfortTemperature/' + newValue);
-            },
-        );
+        if (comfortTemperatureWrite) {
+            this.addStateChangeListener(
+                uuid + '.comfortTemperature',
+                (oldValue: OldStateValue, newValue: CurrentStateValue) => {
+                    this.sendCommand(control.uuidAction, 'setComfortTemperature/' + newValue);
+                },
+            );
+        }
 
         await this.updateStateObjectAsync(
             uuid + '.comfortTolerance',
@@ -149,12 +151,14 @@ export class IRoomControllerV2 extends ControlBase {
                 await this.setStateAck(name, value);
             },
         );
-        this.addStateChangeListener(
-            uuid + '.comfortTolerance',
-            (oldValue: OldStateValue, newValue: CurrentStateValue) => {
-                this.sendCommand(control.uuidAction, 'setComfortTolerance/' + newValue);
-            },
-        );
+        if (comfortToleranceWrite) {
+            this.addStateChangeListener(
+                uuid + '.comfortTolerance',
+                (oldValue: OldStateValue, newValue: CurrentStateValue) => {
+                    this.sendCommand(control.uuidAction, 'setComfortTolerance/' + newValue);
+                },
+            );
+        }
 
         await this.updateStateObjectAsync(
             uuid + '.absentMinOffset',
@@ -171,12 +175,14 @@ export class IRoomControllerV2 extends ControlBase {
                 await this.updateTempTargetMinMax();
             },
         );
-        this.addStateChangeListener(
-            uuid + '.absentMinOffset',
-            (oldValue: OldStateValue, newValue: CurrentStateValue) => {
-                this.sendCommand(control.uuidAction, 'setAbsentMinTemperature/' + newValue);
-            },
-        );
+        if (absentMinOffsetWrite) {
+            this.addStateChangeListener(
+                uuid + '.absentMinOffset',
+                (oldValue: OldStateValue, newValue: CurrentStateValue) => {
+                    this.sendCommand(control.uuidAction, 'setAbsentMinTemperature/' + newValue);
+                },
+            );
+        }
 
         await this.updateStateObjectAsync(
             uuid + '.absentMaxOffset',
@@ -193,12 +199,14 @@ export class IRoomControllerV2 extends ControlBase {
                 await this.updateTempTargetMinMax();
             },
         );
-        this.addStateChangeListener(
-            uuid + '.absentMaxOffset',
-            (oldValue: OldStateValue, newValue: CurrentStateValue) => {
-                this.sendCommand(control.uuidAction, 'setAbsentMaxTemperature/' + newValue);
-            },
-        );
+        if (absentMaxOffsetWrite) {
+            this.addStateChangeListener(
+                uuid + '.absentMaxOffset',
+                (oldValue: OldStateValue, newValue: CurrentStateValue) => {
+                    this.sendCommand(control.uuidAction, 'setAbsentMaxTemperature/' + newValue);
+                },
+            );
+        }
 
         await this.updateStateObjectAsync(
             uuid + '.comfortTemperatureOffset',
@@ -271,7 +279,7 @@ export class IRoomControllerV2 extends ControlBase {
             },
         );
         this.addStateChangeListener(uuid + '.operatingMode', (oldValue: OldStateValue, newValue: CurrentStateValue) => {
-            this.sendCommand(control.uuidAction, 'override/' + newValue);
+            this.sendCommand(control.uuidAction, 'setOperatingMode/' + newValue);
         });
 
         await this.createButtonCommandStateObjectAsync(control.name, uuid, 'stopOverride');
@@ -365,15 +373,15 @@ export class IRoomControllerV2 extends ControlBase {
                 break;
 
             default:
-                this.adapter.log.error(`Unknown IRoomControllerV2 activeMode: ${activeMode}`);
+                this.adapter.reportError(`Unknown IRoomControllerV2 activeMode: ${activeMode}`);
                 break;
         }
 
         // Don't do any update if not calculated (can only happen in error condition)
-        if (tempTargetMin != null) {
+        if (tempTargetMin !== undefined) {
             await this.setStateAck(this.uuid + '.tempTargetMin', tempTargetMin);
         }
-        if (tempTargetMax != null) {
+        if (tempTargetMax !== undefined) {
             await this.setStateAck(this.uuid + '.tempTargetMax', tempTargetMax);
         }
     }

@@ -5,9 +5,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Loxone = void 0;
 const utils = require("@iobroker/adapter-core");
-const loxoneWsApi = require("node-lox-ws-api");
+const SentryNode = require("@sentry/node");
+const axios_1 = require("axios");
+const LxCommunicator = require("lxcommunicator");
+const uuid_1 = require("uuid");
+const Unknown_1 = require("./controls/Unknown");
 const weather_server_handler_1 = require("./weather-server-handler");
+const FormData = require("form-data");
 const Queue = require("queue-fifo");
+const WebSocketConfig = LxCommunicator.WebSocketConfig;
 class Loxone extends utils.Adapter {
     constructor(options = {}) {
         super({
@@ -15,6 +21,7 @@ class Loxone extends utils.Adapter {
             ...options,
             name: 'loxone',
         });
+        this.uuid = '';
         this.existingObjects = {};
         this.currentStateValues = {};
         this.operatingModes = {};
@@ -25,14 +32,20 @@ class Loxone extends utils.Adapter {
         this.eventsQueue = new Queue();
         this.runQueue = false;
         this.queueRunning = false;
+        this.reportedMissingControls = new Set();
+        this.reportedUnsupportedStateChanges = new Set();
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         this.on('unload', this.onUnload.bind(this));
+        this.info = new Map();
+        this.unknownEventDetails = new Map();
     }
     /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
+        // Init info
+        await this.initInfoStates();
         // store all current (acknowledged) state values
         const allStates = await this.getStatesAsync('*');
         for (const id in allStates) {
@@ -44,88 +57,151 @@ class Loxone extends utils.Adapter {
         this.existingObjects = await this.getAdapterObjectsAsync();
         // Reset the connection indicator during startup
         this.setState('info.connection', false, true);
+        this.uuid = (0, uuid_1.v4)();
         // connect to Loxone Miniserver
-        this.client = new loxoneWsApi(this.config.host + ':' + this.config.port, this.config.username, this.config.password, true, 'AES-256-CBC');
-        this.client.on('connect', () => {
-            this.log.info('Miniserver connected');
-        });
-        this.client.on('authorized', () => {
-            this.log.debug('authorized');
-        });
-        this.client.on('auth_failed', () => {
-            this.log.error('Miniserver auth failed');
-        });
-        this.client.on('connect_failed', () => {
-            this.log.error('Miniserver connect failed');
-        });
-        this.client.on('connection_error', (error) => {
-            this.log.error('Miniserver connection error: ' + error);
-        });
-        this.client.on('close', () => {
-            this.log.info('connection closed');
-            // Stop queue and clear it. Issue a warning if it isn't empty.
-            this.runQueue = false;
-            if (this.eventsQueue.size() > 0) {
-                this.log.warn('Event queue is not empty. Discarding ' + this.eventsQueue.size() + ' items');
-            }
-            // Yes - I know this could go in the 'if' above but here 'just in case' ;)
-            this.eventsQueue.clear();
-            this.setState('info.connection', false, true);
-        });
-        this.client.on('send', (message) => {
-            this.log.debug('sent message: ' + message);
-        });
-        this.client.on('message_text', (message) => {
-            this.log.debug('message_text ' + JSON.stringify(message));
-        });
-        this.client.on('message_file', (message) => {
-            this.log.debug('message_file ' + JSON.stringify(message));
-        });
-        this.client.on('message_invalid', (message) => {
-            this.log.debug('message_invalid ' + JSON.stringify(message));
-        });
-        this.client.on('keepalive', (time) => {
-            this.log.silly('keepalive (' + time + 'ms)');
-        });
-        this.client.on('get_structure_file', async (data) => {
-            this.log.silly('get_structure_file ' + JSON.stringify(data));
-            this.log.info('got structure file; last modified on ' + data.lastModified);
-            try {
-                await this.loadStructureFileAsync(data);
-                this.log.debug('structure file successfully loaded');
-                // we are ready, let's set the connection indicator
-                this.setState('info.connection', true, true);
-            }
-            catch (error) {
-                this.log.error(`Couldn't load structure file: ${error}`);
-            }
-        });
+        const webSocketConfig = new WebSocketConfig(WebSocketConfig.protocol.WS, this.uuid, 'iobroker', WebSocketConfig.permission.APP, false);
         const handleAnyEvent = (uuid, evt) => {
             this.log.silly(`received update event: ${JSON.stringify(evt)}: ${uuid}`);
             this.eventsQueue.enqueue({ uuid, evt });
-            this.handleEventQueue().catch((e) => this.log.error(`Unhandled error in event ${uuid}: ${e}`));
+            this.handleEventQueue().catch((e) => {
+                var _a;
+                this.log.error(`Unhandled error in event ${uuid}: ${e}`);
+                (_a = this.getSentry()) === null || _a === void 0 ? void 0 : _a.captureException(e, { extra: { uuid, evt } });
+            });
         };
-        this.client.on('update_event_value', handleAnyEvent);
-        this.client.on('update_event_text', handleAnyEvent);
-        this.client.on('update_event_daytimer', handleAnyEvent);
-        this.client.on('update_event_weather', handleAnyEvent);
-        this.client.connect();
+        webSocketConfig.delegate = {
+            socketOnDataProgress: (socket, progress) => {
+                this.log.debug('data progress ' + progress);
+            },
+            socketOnTokenConfirmed: (_socket, _response) => {
+                this.log.debug('token confirmed');
+            },
+            socketOnTokenReceived: (_socket, _result) => {
+                this.log.debug('token received');
+            },
+            socketOnConnectionClosed: (socket, code) => {
+                this.log.info('Socket closed ' + code);
+                // Stop queue and clear it. Issue a warning if it isn't empty.
+                this.runQueue = false;
+                if (this.eventsQueue.size() > 0) {
+                    this.log.warn('Event queue is not empty. Discarding ' + this.eventsQueue.size() + ' items');
+                }
+                // Yes - I know this could go in the 'if' above but here 'just in case' ;)
+                this.eventsQueue.clear();
+                this.setState('info.connection', false, true);
+                if (code != LxCommunicator.SupportCode.WEBSOCKET_MANUAL_CLOSE) {
+                    this.reconnect();
+                }
+            },
+            socketOnEventReceived: (socket, events, type) => {
+                this.log.silly(`socket event received ${type} ${JSON.stringify(events)}`);
+                this.incInfoState('info.messagesReceived');
+                for (const evt of events) {
+                    switch (type) {
+                        case LxCommunicator.BinaryEvent.Type.EVENT:
+                            handleAnyEvent(evt.uuid, evt.value);
+                            break;
+                        case LxCommunicator.BinaryEvent.Type.EVENTTEXT:
+                            handleAnyEvent(evt.uuid, evt.text);
+                            break;
+                        case LxCommunicator.BinaryEvent.Type.EVENT:
+                            handleAnyEvent(evt.uuid, evt);
+                            break;
+                        case LxCommunicator.BinaryEvent.Type.WEATHER:
+                            handleAnyEvent(evt.uuid, evt);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            },
+        };
+        this.socket = new LxCommunicator.WebSocket(webSocketConfig);
+        await this.connect();
         this.subscribeStates('*');
+    }
+    async connect() {
+        this.log.info('Trying to connect');
+        try {
+            await this.socket.open(this.config.host + ':' + this.config.port, this.config.username, this.config.password);
+        }
+        catch (error) {
+            // do not stringify error, it can contain circular references
+            this.log.error(`Couldn't open socket`);
+            this.reconnect();
+            return false;
+        }
+        let file;
+        try {
+            const fileString = await this.socket.send('data/LoxAPP3.json');
+            file = JSON.parse(fileString);
+        }
+        catch (error) {
+            // do not stringify error, it can contain circular references
+            this.log.error(`Couldn't get structure file`);
+            this.reconnect();
+            return false;
+        }
+        this.log.silly(`get_structure_file ${JSON.stringify(file)}`);
+        this.log.info(`got structure file; last modified on ${file.lastModified}`);
+        const sentry = this.getSentry();
+        if (sentry) {
+            // add a global event processor to upload the structure file (only once)
+            sentry.addGlobalEventProcessor(this.createSentryEventProcessor(file));
+        }
+        try {
+            await this.loadStructureFileAsync(file);
+            this.log.debug('structure file successfully loaded');
+            // we are ready, let's set the connection indicator
+            this.setState('info.connection', true, true);
+        }
+        catch (error) {
+            // do not stringify error, it can contain circular references
+            this.log.error(`Couldn't load structure file`);
+            sentry === null || sentry === void 0 ? void 0 : sentry.captureException(error, { extra: { file } });
+            this.socket.close();
+            this.reconnect();
+            return false;
+        }
+        try {
+            await this.socket.send('jdev/sps/enablebinstatusupdate');
+        }
+        catch (error) {
+            // do not stringify error, it can contain circular references
+            this.log.error(`Couldn't enable status updates`);
+            this.socket.close();
+            this.reconnect();
+            return false;
+        }
+        return true;
+    }
+    reconnect() {
+        if (this.reconnectTimer) {
+            return;
+        }
+        this.reconnectTimer = this.setTimeout(() => {
+            delete this.reconnectTimer;
+            this.connect().catch((e) => {
+                this.log.error(`Couldn't reconnect: ${e}`);
+                this.reconnect();
+            });
+        }, 5000);
     }
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      */
     onUnload(callback) {
         try {
-            if (this.client) {
-                this.client.close();
-                delete this.client;
+            if (this.socket) {
+                this.socket.close();
+                delete this.socket;
             }
             callback();
         }
         catch (e) {
             callback();
         }
+        this.flushInfoStates();
     }
     /**
      * Is called if a subscribed state changes
@@ -135,12 +211,65 @@ class Loxone extends utils.Adapter {
         if (!id || !state || state.ack) {
             return;
         }
+        // Ignore info changes
+        // TODO: can this be done better by ignoring '.info.' in subscribeStates?
+        if (id.includes('.info.')) {
+            return;
+        }
         this.log.silly(`stateChange ${id} ${JSON.stringify(state)}`);
         if (!this.stateChangeListeners.hasOwnProperty(id)) {
-            this.log.error('Unsupported state change: ' + id);
+            const msg = 'Unsupported state change: ' + id;
+            this.log.error(msg);
+            if (!this.reportedUnsupportedStateChanges.has(id)) {
+                this.reportedUnsupportedStateChanges.add(id);
+                const sentry = this.getSentry();
+                sentry === null || sentry === void 0 ? void 0 : sentry.withScope((scope) => {
+                    scope.setExtra('state', state);
+                    sentry.captureMessage(msg, SentryNode.Severity.Warning);
+                });
+            }
             return;
         }
         this.stateChangeListeners[id](this.currentStateValues[id], state.val);
+    }
+    createSentryEventProcessor(data) {
+        const sentry = this.getSentry();
+        let attachmentEventId;
+        return async (event) => {
+            var _a;
+            try {
+                if (attachmentEventId) {
+                    // structure file was already added
+                    if (event.breadcrumbs) {
+                        event.breadcrumbs.push({
+                            type: 'debug',
+                            category: 'started',
+                            message: `Structure file added to event ${attachmentEventId}`,
+                            level: SentryNode.Severity.Info,
+                        });
+                    }
+                    return event;
+                }
+                const dsn = (_a = sentry.getCurrentHub().getClient()) === null || _a === void 0 ? void 0 : _a.getDsn();
+                if (!dsn || !event.event_id) {
+                    return event;
+                }
+                attachmentEventId = event.event_id;
+                const { host, path, projectId, port, protocol, user } = dsn;
+                const endpoint = `${protocol}://${host}${port !== '' ? `:${port}` : ''}${path !== '' ? `/${path}` : ''}/api/${projectId}/events/${attachmentEventId}/attachments/?sentry_key=${user}&sentry_version=7&sentry_client=custom-javascript`;
+                const form = new FormData();
+                form.append('att', JSON.stringify(data, null, 2), {
+                    contentType: 'application/json',
+                    filename: 'LoxAPP3.json',
+                });
+                await axios_1.default.post(endpoint, form, { headers: form.getHeaders() });
+                return event;
+            }
+            catch (ex) {
+                this.log.error(`Couldn't upload structure file attachment to sentry: ${ex}`);
+            }
+            return event;
+        };
     }
     async loadStructureFileAsync(data) {
         this.stateEventHandlers = {};
@@ -183,11 +312,16 @@ class Loxone extends utils.Adapter {
                 role: 'value',
                 handler: this.setStateAck.bind(this),
             },
+            hasInternet: {
+                type: 'boolean',
+                role: 'indicator',
+                handler: (name, value) => this.setStateAck(name, value === 1),
+            },
         };
         const defaultInfo = {
             type: 'string',
             role: 'text',
-            handler: this.setStateAck.bind(this),
+            handler: (name, value) => this.setStateAck(name, `${value}`),
         };
         // special case for operating mode (text)
         await this.updateObjectAsync('operatingMode-text', {
@@ -221,6 +355,7 @@ class Loxone extends utils.Adapter {
         await this.setStateAck(name + '-text', this.operatingModes[value]);
     }
     async loadControlsAsync(controls) {
+        var _a;
         let hasUnsupported = false;
         for (const uuid in controls) {
             const control = controls[uuid];
@@ -232,6 +367,7 @@ class Loxone extends utils.Adapter {
             }
             catch (e) {
                 this.log.info(`Currently unsupported control type ${control.type}: ${e}`);
+                (_a = this.getSentry()) === null || _a === void 0 ? void 0 : _a.captureException(e, { extra: { uuid, control } });
                 if (!hasUnsupported) {
                     hasUnsupported = true;
                     await this.updateObjectAsync('Unsupported', {
@@ -252,12 +388,13 @@ class Loxone extends utils.Adapter {
                         type: 'string',
                         role: 'text',
                     },
-                    native: { control: control },
+                    native: { control },
                 });
             }
         }
     }
     async loadSubControlsAsync(parentUuid, control) {
+        var _a;
         if (!control.hasOwnProperty('subControls')) {
             return;
         }
@@ -278,13 +415,23 @@ class Loxone extends utils.Adapter {
             }
             catch (e) {
                 this.log.info(`Currently unsupported sub-control type ${subControl.type}: ${e}`);
+                (_a = this.getSentry()) === null || _a === void 0 ? void 0 : _a.captureException(e, { extra: { uuid, subControl } });
             }
         }
     }
     async loadControlAsync(controlType, uuid, control) {
         const type = control.type || 'None';
-        const module = await Promise.resolve().then(() => require(`./controls/${type}`));
-        const controlObject = new module[type](this);
+        if (type.match(/[^a-z0-9]/i)) {
+            throw new Error(`Bad control type: ${type}`);
+        }
+        let controlObject;
+        try {
+            const module = await Promise.resolve().then(() => require(`./controls/${type}`));
+            controlObject = new module[type](this);
+        }
+        catch (error) {
+            controlObject = new Unknown_1.Unknown(this);
+        }
         await controlObject.loadAsync(controlType, uuid, control);
         if (control.hasOwnProperty('room')) {
             if (!this.foundRooms.hasOwnProperty(control.room)) {
@@ -349,8 +496,12 @@ class Loxone extends utils.Adapter {
         }
     }
     async loadWeatherServerAsync(data) {
+        if (this.config.weatherServer === 'off') {
+            this.log.debug('WeatherServer is disabled in the adapter configuration');
+            return;
+        }
         const handler = new weather_server_handler_1.WeatherServerHandler(this);
-        await handler.loadAsync(data);
+        await handler.loadAsync(data, this.config.weatherServer || 'all');
     }
     async handleEventQueue() {
         // TODO: This solution with globals for runQueue & queueRunning
@@ -374,9 +525,11 @@ class Loxone extends utils.Adapter {
         }
     }
     async handleEvent(evt) {
+        var _a;
         const stateEventHandlerList = this.stateEventHandlers[evt.uuid];
         if (stateEventHandlerList === undefined) {
-            this.log.debug('Unknown event UUID: ' + evt.uuid);
+            this.log.debug(`Unknown event ${evt.uuid}: ${JSON.stringify(evt.evt)}`);
+            this.addUnknownEvent(evt.uuid, evt.evt);
             return;
         }
         for (const item of stateEventHandlerList) {
@@ -385,12 +538,123 @@ class Loxone extends utils.Adapter {
             }
             catch (e) {
                 this.log.error(`Error while handling event UUID ${evt.uuid}: ${e}`);
+                (_a = this.getSentry()) === null || _a === void 0 ? void 0 : _a.captureException(e, { extra: { evt } });
+            }
+        }
+    }
+    async initInfoStates() {
+        // Wait for states to load because if we don't, although the chances
+        // of processing starting before this actually completes is small, we
+        // should cater for that.
+        await this.initInfoState('info.messagesReceived');
+        await this.initInfoState('info.messagesSent');
+        await this.initInfoState('info.unknownEvents');
+        // The actual value of info.unknownEventDetails is built with a
+        // callback when needed (when timer completes). This avoids
+        // constantly stringifying the object every time it is updated.
+        //
+        // TODO: to avoid resetting event details on every startup
+        // there really should be a SetInfoValueCallback.
+        await this.initInfoState('info.unknownEventDetails', () => {
+            const out = [];
+            this.unknownEventDetails.forEach((value, key) => {
+                out.push({ id: key, count: value.count, lastValue: value.lastValue });
+            });
+            return JSON.stringify(out);
+        });
+    }
+    async initInfoState(id, getValueCallback = null) {
+        const state = await this.getStateAsync(id);
+        const initValue = state ? state.val : null;
+        this.info.set(id, {
+            getValueCallback: getValueCallback,
+            value: initValue,
+            lastSet: initValue,
+            timer: null,
+        });
+    }
+    flushInfoStates() {
+        // Called on shutdown
+        this.info.forEach((infoEntry, key) => {
+            if (infoEntry.timer) {
+                // Timer running, so cancel it and update state value if changed since last written
+                this.clearTimeout(infoEntry.timer);
+                this.setInfoStateIfChanged(key, infoEntry, true);
+            }
+        });
+    }
+    getInfoEntry(id) {
+        const infoEntry = this.info.get(id);
+        if (!infoEntry) {
+            // This should never happen!
+            this.log.error('No info entry for ' + id);
+        }
+        return infoEntry;
+    }
+    addUnknownEvent(id, value) {
+        // Increment global counter...
+        this.incInfoState('info.unknownEvents');
+        /// ... and add details of this event to unknown map.
+        const eventEntry = this.unknownEventDetails.get(id);
+        if (eventEntry) {
+            // Add to existing
+            eventEntry.count++;
+            eventEntry.lastValue = value;
+        }
+        else {
+            // New entry
+            this.unknownEventDetails.set(id, { count: 1, lastValue: value });
+        }
+        // Store details in DB
+        const infoEntry = this.getInfoEntry('info.unknownEventDetails');
+        if (infoEntry && !infoEntry.timer) {
+            this.setInfoStateIfChanged('info.unknownEventDetails', infoEntry);
+        }
+    }
+    incInfoState(id) {
+        // Increment the given ID
+        const infoEntry = this.getInfoEntry(id);
+        if (infoEntry && !infoEntry.timer) {
+            // Can't use ++ here because ioBroker.StateValue isn't necessarily a number
+            infoEntry.value = Number(infoEntry.value) + 1;
+            this.setInfoStateIfChanged(id, infoEntry);
+        }
+    }
+    setInfoStateIfChanged(id, infoEntry, shutdown = false) {
+        // Build the current value with callback if there is one
+        if (infoEntry.getValueCallback) {
+            infoEntry.value = infoEntry.getValueCallback();
+        }
+        if (infoEntry.value != infoEntry.lastSet) {
+            this.setState(id, infoEntry.value, true);
+            infoEntry.lastSet = infoEntry.value;
+            this.log.silly('value of ' + id + ' changed to ' + infoEntry.value);
+            if (!shutdown) {
+                // Start a timer which will set the current value from the info ID map on completion
+                // Obviously don't do this if called from shutdown
+                this.log.silly('Starting timer for ' + id);
+                infoEntry.timer = this.setTimeout((cbId, cbInfoEntry) => {
+                    this.log.silly('Timeout for ' + id);
+                    // Remove from timer from map as we have just finished
+                    cbInfoEntry.timer = null;
+                    // Update the state, but only if the value in the info ID map has changed
+                    this.setInfoStateIfChanged(cbId, cbInfoEntry);
+                }, 30000, // Update every 30s max TODO: make this a config parameter?
+                id, infoEntry);
             }
         }
     }
     sendCommand(uuid, action) {
         this.log.debug(`Sending command ${uuid} ${action}`);
-        this.client.send_cmd(uuid, action);
+        this.incInfoState('info.messagesSent');
+        this.socket.send(`jdev/sps/io/${uuid}/${action}`, 2);
+    }
+    getExistingObject(id) {
+        const fullId = this.namespace + '.' + id;
+        if (this.existingObjects.hasOwnProperty(fullId)) {
+            return this.existingObjects[fullId];
+        }
+        return undefined;
     }
     async updateObjectAsync(id, obj) {
         const fullId = this.namespace + '.' + id;
@@ -467,6 +731,19 @@ class Loxone extends utils.Adapter {
             return this.currentStateValues[keyId];
         }
         return undefined;
+    }
+    getSentry() {
+        if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
+            const sentryInstance = this.getPluginInstance('sentry');
+            if (sentryInstance) {
+                return sentryInstance.getSentryObject();
+            }
+        }
+    }
+    reportError(message) {
+        var _a;
+        this.log.error(message);
+        (_a = this.getSentry()) === null || _a === void 0 ? void 0 : _a.captureMessage(message, SentryNode.Severity.Error);
     }
 }
 exports.Loxone = Loxone;

@@ -11,7 +11,7 @@ class WeatherServerHandler extends loxone_handler_base_1.LoxoneHandlerBase {
         this.weatherTypeTexts = {};
         this.forecastChannelsCount = 0;
     }
-    async loadAsync(data) {
+    async loadAsync(data, filter) {
         if (data === undefined || !data.hasOwnProperty('states') || !data.states.hasOwnProperty('actual')) {
             return;
         }
@@ -28,16 +28,20 @@ class WeatherServerHandler extends loxone_handler_base_1.LoxoneHandlerBase {
         });
         await this.setWeatherObjectsAsync('Actual');
         this.addStateEventHandler(data.states.actual, async (value) => {
-            await this.setWeatherStates(deviceName + '.Actual', value.entry[0]);
+            await this.setWeatherStates(deviceName + '.Actual', value.entries[0]);
         });
+        if (filter === 'current') {
+            return;
+        }
         this.addStateEventHandler(data.states.forecast, async (value) => {
-            for (let i = 0; i < value.entry.length; i++) {
-                const channelName = 'Hour' + sprintf_js_1.sprintf('%02d', i + 1);
+            const hourCount = Math.min(value.entries.length, filter === '1day' ? 24 : Number.MAX_VALUE);
+            for (let i = 0; i < hourCount; i++) {
+                const channelName = 'Hour' + (0, sprintf_js_1.sprintf)('%02d', i + 1);
                 if (i >= this.forecastChannelsCount) {
                     await this.setWeatherObjectsAsync(channelName);
                     this.forecastChannelsCount++;
                 }
-                await this.setWeatherStates(deviceName + '.' + channelName, value.entry[i]);
+                await this.setWeatherStates(deviceName + '.' + channelName, value.entries[i]);
             }
         });
     }

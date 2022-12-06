@@ -8,6 +8,17 @@ class ColorpickerBase extends control_base_1.ControlBase {
         if (!control.states || !control.states.hasOwnProperty('color')) {
             return;
         }
+        if (control.details.pickerType === 'Rgb') {
+            await this.loadRgbColorPickerAsync(uuid, control);
+        }
+        else if (control.details.pickerType === 'Lumitech') {
+            await this.loadLumitechColorPickerAsync(uuid, control);
+        }
+        else {
+            throw 'Unsupported color picker type: ' + control.details.pickerType;
+        }
+    }
+    async loadRgbColorPickerAsync(uuid, control) {
         await this.updateStateObjectAsync(uuid + '.red', {
             name: control.name + ': red',
             read: true,
@@ -16,6 +27,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             role: 'level.color.red',
             min: 0,
             max: 255,
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const rgb = this.loxoneColorToRgb(value);
             if (rgb !== undefined) {
@@ -30,6 +42,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             role: 'level.color.green',
             min: 0,
             max: 255,
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const rgb = this.loxoneColorToRgb(value);
             if (rgb !== undefined) {
@@ -44,6 +57,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             role: 'level.color.blue',
             min: 0,
             max: 255,
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const rgb = this.loxoneColorToRgb(value);
             if (rgb !== undefined) {
@@ -56,6 +70,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             write: false,
             type: 'string',
             role: 'level.color.rgb',
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const rgb = this.loxoneColorToRgb(value);
             if (rgb !== undefined) {
@@ -70,6 +85,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             role: 'level.color.level',
             min: 0,
             max: 100,
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const brightnessTemperature = this.loxoneColorToBrightnessTemperature(value);
             if (brightnessTemperature !== undefined) {
@@ -82,6 +98,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             write: false,
             type: 'number',
             role: 'level.color.temperature',
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const brightnessTemperature = this.loxoneColorToBrightnessTemperature(value);
             if (brightnessTemperature !== undefined) {
@@ -94,6 +111,7 @@ class ColorpickerBase extends control_base_1.ControlBase {
             write: false,
             type: 'number',
             role: 'level.color.temperature',
+            // TODO: re-add: smartIgnore: true,
         }, control.states.color, async (name, value) => {
             const brightnessTemperature = this.loxoneColorToBrightnessTemperature(value);
             if (brightnessTemperature !== undefined) {
@@ -105,12 +123,12 @@ class ColorpickerBase extends control_base_1.ControlBase {
         // we don't change the color three times using commands
         const parentId = this.adapter.namespace + '.' + uuid;
         const updateColorValue = async () => {
-            const states = await this.adapter.getStatesAsync(uuid + '.*');
+            const states = (await this.adapter.getStatesAsync(uuid + '.*'));
             const red = this.convertStateToInt(states[parentId + '.red'].val);
             const green = this.convertStateToInt(states[parentId + '.green'].val);
             const blue = this.convertStateToInt(states[parentId + '.blue'].val);
             const hsv = colorConvert.rgb.hsv([red, green, blue]);
-            const command = `hsv(${hsv[0]},${hsv[1]},${hsv[2]}`;
+            const command = `hsv(${hsv[0]},${hsv[1]},${hsv[2]})`;
             this.sendCommand(control.uuidAction, command);
         };
         const startUpdateTimer = () => {
@@ -122,6 +140,57 @@ class ColorpickerBase extends control_base_1.ControlBase {
         this.addStateChangeListener(uuid + '.red', startUpdateTimer);
         this.addStateChangeListener(uuid + '.green', startUpdateTimer);
         this.addStateChangeListener(uuid + '.blue', startUpdateTimer);
+    }
+    async loadLumitechColorPickerAsync(uuid, control) {
+        await this.updateStateObjectAsync(uuid + '.brightness', {
+            name: control.name + ': Brightness',
+            read: true,
+            write: true,
+            type: 'number',
+            role: 'level.color.level',
+            min: 0,
+            max: 100,
+            // TODO: re-add: smartIgnore: true,
+        }, control.states.color, async (name, value) => {
+            const brightnessTemperature = this.lumitechColorToBrightnessTemperature(value);
+            if (brightnessTemperature !== undefined) {
+                await this.setStateAck(name, brightnessTemperature[0]);
+            }
+        });
+        await this.updateStateObjectAsync(uuid + '.temperature', {
+            name: control.name + ': Temperature',
+            read: true,
+            write: true,
+            type: 'number',
+            role: 'level.color.temperature',
+            min: 2000,
+            max: 8000,
+            // TODO: re-add: smartIgnore: true,
+        }, control.states.color, async (name, value) => {
+            const brightnessTemperature = this.lumitechColorToBrightnessTemperature(value);
+            if (brightnessTemperature !== undefined) {
+                await this.setStateAck(name, brightnessTemperature[1]);
+            }
+        });
+        // we use a timer (100 ms) to update the two color values,
+        // so if somebody sends us the two values (almost) at once,
+        // we don't change the color twice using commands
+        const parentId = this.adapter.namespace + '.' + uuid;
+        const updateColorValue = async () => {
+            const states = (await this.adapter.getStatesAsync(uuid + '.*'));
+            const brightness = this.convertStateToInt(states[parentId + '.brightness'].val);
+            const temperature = this.convertStateToInt(states[parentId + '.temperature'].val);
+            const command = `lumitech(${brightness},${temperature})`;
+            this.sendCommand(control.uuidAction, command);
+        };
+        const startUpdateTimer = () => {
+            if (this.colorUpdateTimer) {
+                clearTimeout(this.colorUpdateTimer);
+            }
+            this.colorUpdateTimer = setTimeout(updateColorValue, 100);
+        };
+        this.addStateChangeListener(uuid + '.brightness', startUpdateTimer);
+        this.addStateChangeListener(uuid + '.temperature', startUpdateTimer);
     }
     loxoneColorToRgb(value) {
         if (!value) {
@@ -169,6 +238,19 @@ class ColorpickerBase extends control_base_1.ControlBase {
         }
         value = value.toString();
         const match = value.match(/temp\((\d+),(\d+)\)/i);
+        if (match) {
+            const brightness = parseFloat(match[1]);
+            const temperature = parseFloat(match[2]);
+            return [Math.round(brightness), Math.round(temperature)];
+        }
+        return undefined;
+    }
+    lumitechColorToBrightnessTemperature(value) {
+        if (!value) {
+            return undefined;
+        }
+        value = value.toString();
+        const match = value.match(/lumitech\((\d+),(\d+)\)/i);
         if (match) {
             const brightness = parseFloat(match[1]);
             const temperature = parseFloat(match[2]);
