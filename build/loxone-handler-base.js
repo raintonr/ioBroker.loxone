@@ -25,14 +25,27 @@ class LoxoneHandlerBase {
         await this.adapter.setStateAck(id, value);
     }
     async setFormattedStateAck(id, value, format) {
-        value = sprintf_js_1.sprintf(format, value);
+        value = (0, sprintf_js_1.sprintf)(format, value);
         await this.setStateAck(id, value);
     }
     convertStateToInt(value) {
         return !value ? 0 : parseInt(value.toString());
     }
     convertStateToFloat(value) {
+        if (typeof value === 'number') {
+            return value;
+        }
         return !value ? 0 : parseFloat(value.toString());
+    }
+    convertStateToBoolean(value) {
+        if (!value) {
+            return false;
+        }
+        if (typeof value === 'boolean') {
+            return value;
+        }
+        value = value.toString();
+        return value !== '0' && value !== 'false';
     }
     getCachedStateValue(id) {
         return this.adapter.getCachedStateValue(id);
@@ -51,7 +64,9 @@ class LoxoneHandlerBase {
             if (skipKeys.indexOf(stateName) !== -1) {
                 continue;
             }
-            await this.createSimpleControlStateObjectAsync(controlName, uuid, states, stateName, 'string', 'text');
+            await this.createSimpleControlStateObjectAsync(controlName, uuid, states, stateName, 'string', 'text', {
+                desc: 'This state is currently unsupported by this adapter, you can only see the text representation of it.',
+            });
         }
     }
     async createSimpleControlStateObjectAsync(controlName, uuid, states, name, type, role, commonExt) {
@@ -62,15 +77,28 @@ class LoxoneHandlerBase {
                 write: false,
                 type: type,
                 role: role,
-                smartIgnore: true,
+                // TODO: re-add: smartIgnore: true,
             };
             if (commonExt && typeof commonExt === 'object') {
                 common = { ...common, ...commonExt };
             }
-            await this.updateStateObjectAsync(uuid + '.' + this.normalizeName(name), common, states[name], this.setStateAck.bind(this));
+            await this.updateStateObjectAsync(uuid + '.' + this.normalizeName(name), common, states[name], (id, value) => {
+                switch (type) {
+                    case 'number':
+                        value = this.convertStateToFloat(value);
+                        break;
+                    case 'boolean':
+                        value = this.convertStateToBoolean(value);
+                        break;
+                    default:
+                        value = value === null || value === undefined ? '' : value.toString();
+                        break;
+                }
+                return this.setStateAck(id, value);
+            });
         }
     }
-    async createBooleanControlStateObjectAsync(controlName, uuid, states, name, role, commonExt) {
+    async createBooleanControlStateObjectAsync(controlName, uuid, states, name, role, commonExt, converter) {
         if (states !== undefined && states.hasOwnProperty(name)) {
             let common = {
                 name: controlName + ': ' + name,
@@ -78,13 +106,14 @@ class LoxoneHandlerBase {
                 write: false,
                 type: 'boolean',
                 role: role,
-                smartIgnore: true,
+                // TODO: re-add: smartIgnore: true,
             };
             if (commonExt && typeof commonExt === 'object') {
                 common = { ...common, ...commonExt };
             }
+            const convert = converter || ((value) => value == 1);
             await this.updateStateObjectAsync(uuid + '.' + this.normalizeName(name), common, states[name], async (name, value) => {
-                await this.setStateAck(name, value == 1);
+                await this.setStateAck(name, convert(value));
             });
         }
     }
@@ -96,8 +125,9 @@ class LoxoneHandlerBase {
                 write: false,
                 type: 'array',
                 role: 'list',
+                // TODO: re-add: smartIgnore: true,
             }, states[name], async (name, value) => {
-                await this.setStateAck(name, !value ? [] : value.toString().split('|'));
+                await this.setStateAck(name, !value ? '[]' : JSON.stringify(value.toString().split('|')));
             });
         }
     }
@@ -110,7 +140,7 @@ class LoxoneHandlerBase {
                 type: 'number',
                 role: role,
                 unit: '%',
-                smartIgnore: true,
+                // TODO: re-add: smartIgnore: true,
             };
             if (commonExt && typeof commonExt === 'object') {
                 common = { ...common, ...commonExt };
@@ -127,7 +157,21 @@ class LoxoneHandlerBase {
             write: true,
             type: 'boolean',
             role: 'button',
-            smartIgnore: true,
+            // TODO: re-add: smartIgnore: true,
+        };
+        if (commonExt && typeof commonExt === 'object') {
+            common = { ...common, ...commonExt };
+        }
+        await this.updateStateObjectAsync(uuid + '.' + this.normalizeName(name), common, uuid);
+    }
+    async createNumberInputStateObjectAsync(controlName, uuid, name, role, commonExt) {
+        let common = {
+            name: controlName + ': ' + name,
+            read: false,
+            write: true,
+            type: 'number',
+            role: role,
+            // TODO: re-add: smartIgnore: true,
         };
         if (commonExt && typeof commonExt === 'object') {
             common = { ...common, ...commonExt };

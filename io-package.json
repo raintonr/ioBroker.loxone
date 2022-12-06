@@ -1,8 +1,68 @@
 {
     "common": {
         "name": "loxone",
-        "version": "2.1.0",
+        "version": "3.0.0",
         "news": {
+            "3.0.0": {
+                "en": "Changed to lxcommunicator (fixes #210)\nUpdated all dependencies",
+                "de": "Zu lxcommunicator geändert (Fixes #210)\nAlle Abhängigkeiten aktualisiert",
+                "ru": "Изменен на lxcommunicator (исправления # 210)\nОбновлены все зависимости",
+                "pt": "Alterado para lxcommunicator (correções # 210)\nTodas as dependências atualizadas",
+                "nl": "Gewijzigd in lxcommunicator (reparatie #210)\nAlle afhankelijkheden bijgewerkt",
+                "fr": "Changé en lxcommunicator (correctifs #210)\nMise à jour de toutes les dépendances",
+                "it": "Modificato in lxcommunicator (correzioni #210)\nAggiornate tutte le dipendenze",
+                "es": "Cambiado a lxcommunicator (arreglos # 210)\nActualizadas todas las dependencias",
+                "pl": "Zmieniono na lxcommunicator (poprawki #210)\nZaktualizowano wszystkie zależności",
+                "zh-cn": "更改为 lxcommunicator（修复 #210）\n更新了所有依赖项"
+            },
+            "2.2.3": {
+                "en": "Reduced number of Sentry reports for unsupported controls.",
+                "de": "Reduzierte Anzahl von Sentry-Berichten für nicht unterstützte Kontrollen.",
+                "ru": "Уменьшено количество отчетов Sentry для неподдерживаемых элементов управления.",
+                "pt": "Número reduzido de relatórios Sentry para controles não suportados.",
+                "nl": "Verminderd aantal Sentry-rapporten voor niet-ondersteunde besturingselementen.",
+                "fr": "Réduction du nombre de rapports Sentry pour les contrôles non pris en charge.",
+                "it": "Numero ridotto di rapporti Sentry per controlli non supportati.",
+                "es": "Número reducido de informes Sentry para controles no compatibles.",
+                "pl": "Zmniejszono liczbę raportów Sentry dla nieobsługiwanych elementów sterujących.",
+                "zh-cn": "减少了不受支持的控件的哨兵报告数量。"
+            },
+            "2.2.2": {
+                "en": "Explicitly setting adapter tier to 2.\nAdded support for Daytimer (IOBROKER-LOXONE-1Z)\nAdded support for Radio (IOBROKER-LOXONE-21)\nAdded support for Fronius (IOBROKER-LOXONE-1Y)\nAdded support for IRCDaytimer (IOBROKER-LOXONE-27)\nAdded support for Hourcounter (IOBROKER-LOXONE-23)\nAdded support for InfoOnlyText (IOBROKER-LOXONE-29)\nFixed issues with Lumitech color pickers (#150)",
+                "de": "Adapterschicht explizit auf 2 setzen.\nUnterstützung für Daytimer hinzugefügt (IOBROKER-LOXONE-1Z)\nUnterstützung für Radio hinzugefügt (IOBROKER-LOXONE-21)\nUnterstützung für Fronius (IOBROKER-LOXONE-1Y) hinzugefügt\nUnterstützung für IRCDaytimer hinzugefügt (IOBROKER-LOXONE-27)\nUnterstützung für Stundenzähler hinzugefügt (IOBROKER-LOXONE-23)\nUnterstützung für InfoOnlyText hinzugefügt (IOBROKER-LOXONE-29)\nProbleme mit Lumitech-Farbwählern behoben (#150)",
+                "ru": "Явная установка уровня адаптера на 2.\nДобавлена поддержка Daytimer (IOBROKER-LOXONE-1Z).\nДобавлена поддержка Радио (IOBROKER-LOXONE-21).\nДобавлена поддержка Fronius (IOBROKER-LOXONE-1Y).\nДобавлена поддержка IRCDaytimer (IOBROKER-LOXONE-27).\nДобавлена поддержка Hourcounter (IOBROKER-LOXONE-23).\nДобавлена поддержка InfoOnlyText (IOBROKER-LOXONE-29).\nИсправлены проблемы с палитры цветов Lumitech (# 150)",
+                "pt": "Definir explicitamente o nível do adaptador como 2.\nAdicionado suporte para Daytimer (IOBROKER-LOXONE-1Z)\nAdicionado suporte para rádio (IOBROKER-LOXONE-21)\nAdicionado suporte para Fronius (IOBROKER-LOXONE-1Y)\nAdicionado suporte para IRCDaytimer (IOBROKER-LOXONE-27)\nAdicionado suporte para contador de horas (IOBROKER-LOXONE-23)\nAdicionado suporte para InfoOnlyText (IOBROKER-LOXONE-29)\nProblemas corrigidos com seletores de cores Lumitech (# 150)",
+                "nl": "Expliciet adapterlaag instellen op 2.\nOndersteuning toegevoegd voor Daytimer (IOBROKER-LOXONE-1Z)\nOndersteuning toegevoegd voor radio (IOBROKER-LOXONE-21)\nOndersteuning toegevoegd voor Fronius (IOBROKER-LOXONE-1Y)\nOndersteuning toegevoegd voor IRCDaytimer (IOBROKER-LOXONE-27)\nOndersteuning toegevoegd voor urenteller (IOBROKER-LOXONE-23)\nOndersteuning toegevoegd voor InfoOnlyText (IOBROKER-LOXONE-29)\nProblemen opgelost met Lumitech-kleurkiezers (#150)",
+                "fr": "Définir explicitement le niveau de l'adaptateur sur 2.\nAjout de la prise en charge de Daytimer (IOBROKER-LOXONE-1Z)\nAjout de la prise en charge de la radio (IOBROKER-LOXONE-21)\nAjout de la prise en charge de Fronius (IOBROKER-LOXONE-1Y)\nAjout du support pour IRCDaytimer (IOBROKER-LOXONE-27)\nAjout du support pour Hourcounter (IOBROKER-LOXONE-23)\nAjout de la prise en charge d'InfoOnlyText (IOBROKER-LOXONE-29)\nCorrection de problèmes avec les sélecteurs de couleurs Lumitech (#150)",
+                "it": "Impostazione esplicita del livello dell'adattatore su 2.\nAggiunto supporto per Daytimer (IOBROKER-LOXONE-1Z)\nAggiunto supporto per Radio (IOBROKER-LOXONE-21)\nAggiunto supporto per Fronius (IOBROKER-LOXONE-1Y)\nAggiunto supporto per IRCDaytimer (IOBROKER-LOXONE-27)\nAggiunto supporto per Contaore (IOBROKER-LOXONE-23)\nAggiunto supporto per InfoOnlyText (IOBROKER-LOXONE-29)\nRisolti problemi con i selettori di colori Lumitech (n. 150)",
+                "es": "Establecer explícitamente el nivel del adaptador en 2.\nSoporte agregado para Daytimer (IOBROKER-LOXONE-1Z)\nSoporte agregado para Radio (IOBROKER-LOXONE-21)\nSoporte agregado para Fronius (IOBROKER-LOXONE-1Y)\nSoporte agregado para IRCDaytimer (IOBROKER-LOXONE-27)\nSoporte agregado para el contador de horas (IOBROKER-LOXONE-23)\nSoporte agregado para InfoOnlyText (IOBROKER-LOXONE-29)\nProblemas resueltos con los selectores de color de Lumitech (n. ° 150)",
+                "pl": "Jawne ustawienie warstwy karty na 2.\nDodano wsparcie dla Daytimera (IOBROKER-LOXONE-1Z)\nDodano obsługę radia (IOBROKER-LOXONE-21)\nDodano obsługę Fronius (IOBROKER-LOXONE-1Y)\nDodano wsparcie dla IRCdaytimer (IOBROKER-LOXONE-27)\nDodano obsługę licznika godzin (IOBROKER-LOXONE-23)\nDodano wsparcie dla InfoOnlyText (IOBROKER-LOXONE-29)\nNaprawiono problemy z próbnikami kolorów Lumitech (nr 150)",
+                "zh-cn": "将适配器层显式设置为 2。\n添加了对 Daytimer (IOBROKER-LOXONE-1Z) 的支持\n添加了对无线电的支持 (IOBROKER-LOXONE-21)\n添加了对 Fronius (IOBROKER-LOXONE-1Y) 的支持\n添加了对 IRCDaytimer (IOBROKER-LOXONE-27) 的支持\n添加了对计时 (IOBROKER-LOXONE-23) 的支持\n添加了对 InfoOnlyText (IOBROKER-LOXONE-29) 的支持\n修复了 Lumitech 颜色选择器 (#150) 的问题"
+            },
+            "2.2.1": {
+                "en": "Fixed typo causing \"Cannot read property 'off' of undefined\" (IOBROKER-LOXONE-2R, #72)\nImproved Sentry reporting for structure file",
+                "de": "Tippfehler behoben, der dazu führte, dass \"Eigenschaft 'aus' von undefiniert nicht gelesen werden konnte\" (IOBROKER-LOXONE-2R, # 72)\nVerbesserte Sentry-Berichterstellung für Strukturdateien",
+                "ru": "Исправлена опечатка, из-за которой \"Невозможно прочитать свойство\" off \"из неопределенного\" (IOBROKER-LOXONE-2R, # 72)\nУлучшенный отчет Sentry для файла структуры",
+                "pt": "Corrigido erro de digitação que causava \"Não é possível ler a propriedade 'desativada' de indefinido\" (IOBROKER-LOXONE-2R, # 72)\nRelatório de sentinela aprimorado para arquivo de estrutura",
+                "nl": "Typefout verholpen waardoor 'Kan eigenschap' uit 'van ongedefinieerd niet lezen' (IOBROKER-LOXONE-2R, # 72)\nVerbeterde Sentry-rapportage voor structuurbestand",
+                "fr": "Correction d'une faute de frappe causant \"Impossible de lire la propriété 'off' d'undefined\" (IOBROKER-LOXONE-2R, # 72)\nRapports Sentry améliorés pour le fichier de structure",
+                "it": "Risolto errore di battitura che causava \"Impossibile leggere la proprietà\" disattivata \"di undefined\" (IOBROKER-LOXONE-2R, # 72)\nSegnalazione Sentry migliorata per il file di struttura",
+                "es": "Se corrigió el error tipográfico que causaba \"No se puede leer la propiedad 'desactivada' de indefinida\" (IOBROKER-LOXONE-2R, # 72)\nInformes sentry mejorados para el archivo de estructura",
+                "pl": "Naprawiono literówkę powodującą „Nie można odczytać właściwości„ wyłączone ”wartości niezdefiniowanej” (IOBROKER-LOXONE-2R, # 72)\nUlepszone raportowanie Sentry dla pliku struktury",
+                "zh-cn": "修复了导致“无法读取未定义的属性'off'的拼写错误”的问题（IOBROKER-LOXONE-2R，＃72）\n改进的Sentry报告结构文件"
+            },
+            "2.2.0": {
+                "en": "Unknown/unsupported controls are now shown with their states as read-only strings\nFixes for auto-position based on percentage (#76)\nAdded support for IRoomControllerV2 (#22)\nAdded experimental support for EIBDimmer (#15)\nAdded support for ValueSelector (#36)\nAdded support for TextState (#73)\nAdded support for UpDownAnalog (#57)\nFixed some \"State has wrong type\" warnings (#99, #128)\nAdded support for Lumitech color picker (#44)\nWeather server data can now be filtered (#131)\nAdded support for PresenceDetector (IOBROKER-LOXONE-1R)\nAdded support for AAL Smart Alarm (IOBROKER-LOXONE-1X)\nAdded support for AAL Emergency Button (IOBROKER-LOXONE-1W)\nAdded support for Paketsafe (IOBROKER-LOXONE-1P)",
+                "de": "Unbekannte / nicht unterstützte Steuerelemente werden jetzt mit ihren Status als schreibgeschützte Zeichenfolgen angezeigt\nKorrekturen für die automatische Positionierung basierend auf dem Prozentsatz (# 76)\nUnterstützung für IRoomControllerV2 hinzugefügt (# 22)\nExperimentelle Unterstützung für EIBDimmer hinzugefügt (# 15)\nUnterstützung für ValueSelector hinzugefügt (# 36)\nUnterstützung für TextState hinzugefügt (# 73)\nUnterstützung für UpDownAnalog hinzugefügt (# 57)\nEinige \"Status hat falschen Typ\" -Warnungen behoben (# 99, # 128)\nUnterstützung für Lumitech-Farbwähler hinzugefügt (# 44)\nWetterserverdaten können jetzt gefiltert werden (# 131)\nUnterstützung für PresenceDetector (IOBROKER-LOXONE-1R) hinzugefügt\nUnterstützung für AAL Smart Alarm (IOBROKER-LOXONE-1X) hinzugefügt\nUnterstützung für AAL-Notfalltaste (IOBROKER-LOXONE-1W) hinzugefügt\nUnterstützung für Paketsafe (IOBROKER-LOXONE-1P) hinzugefügt",
+                "ru": "Неизвестные / неподдерживаемые элементы управления теперь отображаются с их состояниями в виде строк, доступных только для чтения.\nИсправления для автоматического позиционирования на основе процента (# 76)\nДобавлена поддержка IRoomControllerV2 (# 22).\nДобавлена экспериментальная поддержка EIBDimmer (# 15).\nДобавлена поддержка ValueSelector (# 36).\nДобавлена поддержка TextState (# 73).\nДобавлена поддержка UpDownAnalog (# 57).\nИсправлены некоторые предупреждения \"Состояние неправильного типа\" (# 99, # 128)\nДобавлена поддержка палитры цветов Lumitech (# 44).\nДанные погодного сервера теперь можно фильтровать (# 131)\nДобавлена поддержка PresenceDetector (IOBROKER-LOXONE-1R).\nДобавлена поддержка AAL Smart Alarm (IOBROKER-LOXONE-1X).\nДобавлена поддержка аварийной кнопки AAL (IOBROKER-LOXONE-1W).\nДобавлена поддержка Paketsafe (IOBROKER-LOXONE-1P).",
+                "pt": "Controles desconhecidos / não suportados agora são mostrados com seus estados como strings somente leitura\nCorreções para a posição automática com base na porcentagem (# 76)\nAdicionado suporte para IRoomControllerV2 (# 22)\nAdicionado suporte experimental para EIBDimmer (# 15)\nAdicionado suporte para ValueSelector (# 36)\nAdicionado suporte para TextState (# 73)\nAdicionado suporte para UpDownAnalog (# 57)\nCorrigidos alguns avisos de \"Estado com tipo errado\" (# 99, # 128)\nAdicionado suporte para o seletor de cores Lumitech (# 44)\nOs dados do servidor meteorológico agora podem ser filtrados (# 131)\nAdicionado suporte para PresenceDetector (IOBROKER-LOXONE-1R)\nAdicionado suporte para AAL Smart Alarm (IOBROKER-LOXONE-1X)\nAdicionado suporte para botão de emergência AAL (IOBROKER-LOXONE-1W)\nAdicionado suporte para Paketsafe (IOBROKER-LOXONE-1P)",
+                "nl": "Onbekende / niet-ondersteunde besturingselementen worden nu weergegeven met hun status als alleen-lezen strings\nOplossingen voor automatische positie op basis van percentage (# 76)\nOndersteuning toegevoegd voor IRoomControllerV2 (# 22)\nExperimentele ondersteuning toegevoegd voor EIBDimmer (# 15)\nOndersteuning toegevoegd voor ValueSelector (# 36)\nOndersteuning toegevoegd voor TextState (# 73)\nOndersteuning toegevoegd voor UpDownAnalog (# 57)\nEnkele \"Staat heeft een verkeerd type\" -waarschuwingen opgelost (# 99, # 128)\nOndersteuning toegevoegd voor Lumitech-kleurkiezer (# 44)\nDe weerservergegevens kunnen nu worden gefilterd (# 131)\nOndersteuning toegevoegd voor PresenceDetector (IOBROKER-LOXONE-1R)\nOndersteuning toegevoegd voor AAL Smart Alarm (IOBROKER-LOXONE-1X)\nOndersteuning toegevoegd voor AAL-noodknop (IOBROKER-LOXONE-1W)\nOndersteuning toegevoegd voor Paketsafe (IOBROKER-LOXONE-1P)",
+                "fr": "Les contrôles inconnus / non pris en charge sont désormais affichés avec leurs états sous forme de chaînes en lecture seule\nCorrections pour la position automatique en fonction du pourcentage (# 76)\nAjout du support pour IRoomControllerV2 (# 22)\nAjout du support expérimental pour EIBDimmer (# 15)\nAjout de la prise en charge de ValueSelector (# 36)\nAjout du support pour TextState (# 73)\nAjout du support pour UpDownAnalog (# 57)\nCorrection de quelques avertissements \"L'état a un type incorrect\" (# 99, # 128)\nAjout de la prise en charge du sélecteur de couleurs Lumitech (# 44)\nLes données du serveur météo peuvent maintenant être filtrées (# 131)\nAjout de la prise en charge de PresenceDetector (IOBROKER-LOXONE-1R)\nAjout de la prise en charge de l'alarme intelligente AAL (IOBROKER-LOXONE-1X)\nAjout de la prise en charge du bouton d'urgence AAL (IOBROKER-LOXONE-1W)\nAjout de la prise en charge de Paketsafe (IOBROKER-LOXONE-1P)",
+                "it": "I controlli sconosciuti / non supportati ora vengono visualizzati con i loro stati come stringhe di sola lettura\nCorrezioni per il posizionamento automatico in base alla percentuale (# 76)\nAggiunto supporto per IRoomControllerV2 (# 22)\nAggiunto supporto sperimentale per EIBDimmer (# 15)\nAggiunto supporto per ValueSelector (# 36)\nAggiunto supporto per TextState (# 73)\nAggiunto supporto per UpDownAnalog (# 57)\nRisolti alcuni avvisi \"Lo stato ha un tipo sbagliato\" (# 99, # 128)\nAggiunto supporto per selettore colore Lumitech (# 44)\nI dati del server meteo ora possono essere filtrati (# 131)\nAggiunto supporto per PresenceDetector (IOBROKER-LOXONE-1R)\nAggiunto supporto per AAL Smart Alarm (IOBROKER-LOXONE-1X)\nAggiunto supporto per pulsante di emergenza AAL (IOBROKER-LOXONE-1W)\nAggiunto supporto per Paketsafe (IOBROKER-LOXONE-1P)",
+                "es": "Los controles desconocidos / no admitidos ahora se muestran con sus estados como cadenas de solo lectura\nCorrecciones para la posición automática basada en porcentaje (# 76)\nSoporte agregado para IRoomControllerV2 (# 22)\nSe agregó soporte experimental para EIBDimmer (# 15)\nSoporte agregado para ValueSelector (# 36)\nSoporte agregado para TextState (# 73)\nSoporte agregado para UpDownAnalog (# 57)\nSe corrigieron algunas advertencias de \"El estado tiene un tipo incorrecto\" (# 99, # 128)\nSe agregó soporte para el selector de color Lumitech (# 44)\nLos datos del servidor meteorológico ahora se pueden filtrar (# 131)\nSoporte agregado para PresenceDetector (IOBROKER-LOXONE-1R)\nSoporte agregado para AAL Smart Alarm (IOBROKER-LOXONE-1X)\nSoporte agregado para el botón de emergencia AAL (IOBROKER-LOXONE-1W)\nSoporte agregado para Paketsafe (IOBROKER-LOXONE-1P)",
+                "pl": "Nieznane / nieobsługiwane kontrolki są teraz wyświetlane ze swoimi stanami jako ciągi tylko do odczytu\nPoprawki automatycznego pozycjonowania w oparciu o procent (# 76)\nDodano obsługę IRoomControllerV2 (# 22)\nDodano obsługę eksperymentalną dla EIBDimmer (nr 15)\nDodano obsługę ValueSelector (# 36)\nDodano obsługę TextState (# 73)\nDodano obsługę UpDownAnalog (nr 57)\nNaprawiono niektóre ostrzeżenia „Stan ma zły typ” (# 99, # 128)\nDodano obsługę próbnika kolorów Lumitech (# 44)\nDane serwera pogodowego można teraz filtrować (# 131)\nDodano obsługę PresenceDetector (IOBROKER-LOXONE-1R)\nDodano obsługę AAL Smart Alarm (IOBROKER-LOXONE-1X)\nDodano obsługę przycisku awaryjnego AAL (IOBROKER-LOXONE-1W)\nDodano obsługę Paketsafe (IOBROKER-LOXONE-1P)",
+                "zh-cn": "现在，未知/不受支持的控件以只读字符串的形式显示其状态\n修复基于百分比的自动定位（＃76）\n添加了对IRoomControllerV2的支持（＃22）\n增加了对EIBDimmer的实验支持（＃15）\n增加了对ValueSelector的支持（＃36）\n添加了对TextState的支持（＃73）\n添加了对UpDownAnalog的支持（＃57）\n修复了一些“状态类型错误”警告（＃99，＃128）\n增加了对Lumitech颜色选择器的支持（＃44）\n天气服务器数据现在可以被过滤（＃131）\n添加了对PresenceDetector（IOBROKER-LOXONE-1R）的支持\n添加了对AAL智能警报（IOBROKER-LOXONE-1X）的支持\n增加了对AAL紧急按钮（IOBROKER-LOXONE-1W）的支持\n添加了对Paketsafe（IOBROKER-LOXONE-1P）的支持"
+            },
             "2.1.0": {
                 "en": "Major bugfixes and support for virtual text inputs",
                 "de": "Wichtige Bugfixes und Unterstützung für virtuelle Texteingaben",
@@ -225,11 +285,23 @@
         "connectionType": "local",
         "dataSource": "push",
         "materialize": true,
+        "tier": 2,
         "dependencies": [
             {
-                "js-controller": ">=1.4.2"
+                "js-controller": ">=2.0.0"
             }
-        ]
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=4.0.9"
+            }
+        ],
+        "plugins": {
+            "sentry": {
+                "dsn": "https://b83357399aec406c8be63ce73482f7fe@sentry.iobroker.net/130",
+                "pathWhitelist": ["loxone"]
+            }
+        }
     },
     "encryptedNative": ["password"],
     "protectedNative": ["password"],
@@ -240,7 +312,8 @@
         "password": "",
         "syncNames": false,
         "syncRooms": false,
-        "syncFunctions": false
+        "syncFunctions": false,
+        "weatherServer": "all"
     },
     "objects": [],
     "instanceObjects": [
