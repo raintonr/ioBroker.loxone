@@ -722,6 +722,7 @@ Native value from ioBroker &gt; Objects
 ### **WORK IN PROGRESS**
 
 -   (raintonr) Added info statistics (#364)
+-   (raintonr) Added missing states from IRCv2 (#365)
 
 ### 3.0.0 (2021-12-29)
 
